@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="addLog" doc:id="a554970a-7525-4dbc-b159-fbd74221a9c6">
+		<ee:transform doc:name="Transform Message" doc:id="e99d1720-fcf2-4afc-a2c5-f2c3e5545f8f">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="currentLog">
+				<![CDATA[%dw 2.0
+output application/json
+---
+{
+"providerMethodName": vars.addLog.providerMethodName, 
+"providerURL":vars.addLog.providerURL,   
+"providerRequestSentTimeStamp": vars.addLog.startTime default vars.startTime default "",
+"providerResponseReceivedTimeStamp": now(), 
+"systemName": vars.addLog.systemName, 
+"systemType": vars.addLog.systemType, 
+"apiType": vars.addLog.apiType, 
+"userId": authentication.properties.claims.muleSamAccountName default "NTID NOT FOUND",
+"orchestrationStatusCode": error.muleMessage.attributes.statusCode default vars.addLog.statusCode default attributes.statusCode default vars.httpStatus default "",
+"providerStatusCode": vars.addLog.providerStatusCode default vars.httpStatus default "",
+"providerStatusMessage": error.description default vars.addLog.providerStatusMessage default "",
+"providerStatusDetails": error.exception.detailMessage default vars.addLog.providerStatusDetails default "",
+"providerRequestParameter":if(vars.startValues.headers.'x-debugmode' == 'true')
+vars.orchestrationRequestPayload else "",
+"providerResponse":if(vars.startValues.headers.'x-debugmode' == 'true')
+payload else ""
+}]]>
+</ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[%dw 2.0
+&#10;output application/json
+&#10;---
+&#10;vars.orchestrations ++ [vars.currentLog]]" doc:name="orchestrations" doc:id="85bd5ceb-bff4-4ad3-8b3d-0b69882d3a79" variableName="orchestrations"/>
+	</sub-flow>
+	<sub-flow name="addErrorLog" doc:id="235a887a-e210-4d78-a0ac-fea2e1f05897">
+		<ee:transform doc:name="Transform Message" doc:id="e99d1720-fcf2-4afc-a2c5-f2c3e5545f8f">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="currentLog"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"providerMethodName": vars.addLog.providerMethodName, 
+	"providerURL":vars.addLog.providerURL,   
+	"providerRequestSentTimeStamp": vars.addLog.startTime default vars.startTime default "",
+	"providerResponseReceivedTimeStamp": now(), 
+	"systemName": vars.addLog.systemName,
+	"systemType": vars.addLog.systemType, 
+	"apiType": vars.addLog.apiType, 
+	"userId": authentication.properties.claims.muleSamAccountName default "NTID NOT FOUND",
+  "orchestrationStatusCode":vars.addLog.statusCode default error.muleMessage.attributes.statusCode default attributes.statusCode default vars.httpStatus default "",
+  "providerStatusCode": vars.addLog.providerStatusCode  default error.muleMessage.attributes.statusCode default attributes.statusCode default vars.httpStatus default "",
+	"providerStatusDetails": error.exception.detailMessage default vars.addLog.providerStatusDetails default "", //user provides in the addLog variable of service flow, ex: host severity code for ctg
+  "providerStatusMessage": error.description default vars.addLog.providerStatusMessage default "", //user needs to map to the service's own status node via addLog variable of the service's flow 
+	"providerRequestParameter":if(vars.startValues.headers.'x-debugmode' == 'true')
+		vars.orchestrationRequestPayload else "",
+		"providerResponse":if(vars.startValues.headers.'x-debugmode' == 'true')
+		error else "",
+		 }]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[%dw 2.0
+&#10;output application/json
+&#10;---
+&#10;vars.orchestrations ++ [vars.currentLog]]" doc:name="orchestrations" doc:id="e7872d94-8a77-4021-95b8-c41812e93393" variableName="orchestrations" />
+	</sub-flow>
+	<sub-flow name="responseStatus_success" doc:id="dee1f9fe-94af-4b5f-b7ed-ac260bbb14d4">
+		<ee:transform doc:name="Build Response Message" doc:id="d3aed9e4-3599-41d3-b331-bab2e9a1c601">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+//fun checkType(statusCode) =(if((statusCode == 200) or (statusCode == null)) "info" else if(statusCode == 199) "warning" else "error") 
+fun responseStatusType(g) = if (g == "299") "WARN" else if (g startsWith("2")) "INFO" else if ((g startsWith("4")) or (g startsWith("5"))) "ERROR" else ""
+output application/json 
+---
+{	
+	Response: payload.'Response' default payload default {},
+	ResponseStatus:{
+		"type": if(vars.httpStatus == 299) "WARN" else "SUCCESS", 
+        "title": "(REPLACE VALUE) success message: A short, human-readable summary." default attributes.reasonPhrase default vars.httpReason default "",
+        // "status": 200, //on success
+        "status": attributes.statusCode default vars.httpStatus default "", //developer can set their own return statusCode
+				"detail": {}, //leave empty object or populate with relevant status data. Example - CDX return coes and status
+				"correlationId": correlationId default "", 
+        "apiMethodName": vars.startValues.method default attributes.method default "", 
+        //"apiURL": "${api.URL}" default "https://${request.api.host}:${request.api.port}/${request.api.path}", //user provides
+        "apiURL": ("${api.URL}" ++ vars.startValues.requestPath) default ("${api.URL}" ++ attributes.requestPath) default "https://${request.api.host}:${request.api.port}/${request.api.path}" default "", //for multiple endpoints
+				"apiVersion": "${api.version}",
+        "x-ConsumerRequestSentTimeStamp": vars.startValues.headers.'x-consumerrequestsenttimestamp' default "", 
+        "apiRequestReceivedTimeStamp": vars.startValues.apiStartTime default "",
+        "apiResponseSentTimeStamp": now(),
+        "userId": authentication.properties.claims.muleSamAccountName default "NTID NOT FOUND", //update
+        "orchestrations": if(vars.startValues.headers.'x-debugmode' != 'true')
+        	(vars.orchestrations map (item, index) -> item filterObject (value, key) -> key as String != "providerResponse" and key as String !="providerRequestParameter") else vars.orchestrations,
+        (if(vars.startValues.headers.'x-debugmode' == 'true'){
+         "apiRequestParameter": vars.startValues.apiRequestParameter,}else {})
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+<async doc:name="Async Encrypt and Log Request &amp; Response" doc:id="01adb548-eb48-44ad-941c-3d0d883c330a">
+		<try doc:name="Try Encrypt Data" doc:id="ba6a65d4-d997-4148-b6b4-657533470eee">
+				<http:request method="POST" doc:name="Encrypt Request / Response" 
+				doc:id="b7ffb6cc-e1df-4346-a8d6-bccc9f42f470" path="#['${ops.path}']" 
+				sendCorrelationId="AUTO" target="loggedData" config-ref="OpsConfig">
+							<http:body><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	Request: vars.startValues.apiRequestParameter,
+	Response:payload.Response
+	}]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "${ops.secret}" ,
+	"client_id" : "${ops.id}"
+}]]]></http:headers>
+		</http:request>
+					<error-handler>
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c59d76eb-bd88-40c0-9f9a-637c5dd89cad">
+<set-variable value='#[{&#10;Response:{&#10;	"title":"Encryption Unsuccessful",&#10;	"message": error.description default "",&#10;	"statusCode": error.muleMessage.attributes.statusCode as String default ""&#10;}&#10;}]' doc:name="Set Encryption Error" doc:id="1a4dbc44-0e68-42ef-bd3c-8d402c0cdec2" variableName="loggedData" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			<json-logger:logger doc:name="JSON Logger" doc:id="7831c2d9-cf70-47c6-9ca6-d68a0444bc50" config-ref="JSON_Logger_Config" message="MESSAGE_HERE" tracePoint="END">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule
+var res = payload.'ResponseStatus'
+//fun checkType(statusCode) =(if((statusCode == 200) or (statusCode == null)) "info" else if(statusCode == 199) "warning" else "error") 
+fun responseStatusType(g) = if (g == "299") "WARN" else if (g startsWith("2")) "INFO" else if ((g startsWith("4")) or (g startsWith("5"))) "ERROR" else ""
+output application/json 
+---
+{	
+	Data: vars.loggedData.'Response' default "",
+	ResponseStatus:{
+		"type": res.'type', 
+		"title": res.'title',        
+		"status": res.'status' default "HTTP Status Code",
+		"detail": res.'detail',
+		"correlationId": res.'correlationId' default correlationId, 
+		"apiMethodName": vars.startValues.method default res.'apiMethodName' default "", 
+		"apiURL": res.'apiURL' default "", 
+		"apiVersion": "${api.version}" default res.'apiVersion' default "",
+		"x-ConsumerRequestSentTimeStamp": vars.startValues.headers.'x-consumerrequestsenttimestamp' default res.'x-ConsumerRequestSentTimeStamp' default "", 
+		"apiRequestReceivedTimeStamp": vars.startValues.apiStartTime default res.'apiRequestReceivedTimeStamp' default "",
+		"apiResponseSentTimeStamp": now(),
+		"callingApplicationName":authentication.properties.clientName default "",
+  		"callingApplicationVersion":vars.startValues.headers.'x-callingapplicationversion' default "",
+		"userId": authentication.properties.claims.muleSamAccountName default "", 
+		"userEmployeeId":vars.startValues.headers.'x-useremployeeid' default "",
+  		"userComputerName":vars.startValues.headers.'x-usercomputername' default "",
+  		"userLocationNumber":vars.startValues.headers.'x-userlocationnumber' default "",
+ 		"userLocationName":vars.startValues.headers.'x-userlocationname' default "",
+        //provider request/response are filtered out, to prevent logging sensitive data
+        "orchestrations":(vars.orchestrations map (item, index) -> item filterObject (value, key) -> key as String != "providerResponse" and key as String !="providerRequestParameter")
+}
+}]]]></json-logger:content>
+		</json-logger:logger>
+		</async>
+	</sub-flow>
+		<sub-flow name="captureRequestPayload" doc:id="daa86006-a716-46c2-8625-7ac53b792aff" >
+		<set-variable value="#[payload]" doc:name="orchestrationRequestPayload" doc:id="249798a1-6b84-4d74-b4ed-666c063bdb6f" variableName="orchestrationRequestPayload"/>
+	</sub-flow>
+</mule>

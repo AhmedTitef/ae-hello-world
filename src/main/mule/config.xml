@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:min-log="http://www.mulesoft.org/schema/mule/min-log"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:eframework2="http://www.mulesoft.org/schema/mule/eframework2"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:cps="http://www.mulesoft.org/schema/mule/cps" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:ibmctg="http://www.mulesoft.org/schema/mule/ibmctg"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/cps http://www.mulesoft.org/schema/mule/cps/current/mule-cps.xsd
+http://www.mulesoft.org/schema/mule/min-log http://www.mulesoft.org/schema/mule/min-log/current/mule-min-log.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
+http://www.mulesoft.org/schema/mule/ibmctg http://www.mulesoft.org/schema/mule/ibmctg/current/mule-ibmctg.xsd
+http://www.mulesoft.org/schema/mule/eframework2 http://www.mulesoft.org/schema/mule/eframework2/current/mule-eframework2.xsd">
+
+ 	<api-gateway:autodiscovery apiId="${api.id}"
+		flowRef="api-main" doc:name="API Autodiscovery" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="100aa5a3-89f1-452b-a0fa-3d399efde6eb" responseTimeout="${http.responseTimeout}">
+		<http:request-connection host="${http.host}" port="${http.port}" protocol="HTTPS" connectionIdleTimeout="${http.request.idleTimeout}"/>
+	</http:request-config>
+	<db:config name="Example_Database_Config" doc:name="Database Config" doc:id="116cecfb-0747-4f48-99d4-693a76eaee1a" >
+		<db:mssql-connection host='${db.host}' port='${db.port}' user='${db.username}' password='${db.password}' databaseName='${db.database}' >
+			<db:connection-properties >
+			</db:connection-properties>
+		</db:mssql-connection>
+	</db:config>
+	<ibmctg:config name="IBM_CTG_Config" doc:name="IBM CTG Config" doc:id="a4b54f74-155c-4cb4-ae43-e3c18fa3eb73" >
+		<ibmctg:connection host="${ctg.host}" port="${ctg.port}" serverName="${ctg.serverName}" username="#[vars.tsoCreds.tsoId]" password="#[vars.tsoCreds.password]" keystoreLocation="${mule.home}/apps/${app.name}/MuleCTG.jks" keystorePassword="secret" responseTimeout="${ctg.responseTimeout}" connectionTimeout="${ctg.connectionTimeout}">
+			<pooling-profile minEvictionMillis="${eviction.timeout}" evictionCheckIntervalMillis="${eviction.checkInterval}"/>
+		</ibmctg:connection>
+	</ibmctg:config>
+	<json-logger:config name="JSON_Logger_Config" doc:name="JSON Logger Config" doc:id="31908df2-65f3-4e95-a4c2-5daa34de0e97" applicationName="${cps.projectName}" applicationVersion="${api.version}" environment="${mule.env}" />
+	<configuration defaultErrorHandler-ref="apikit-errors" />
+<http:request-config name="OpsConfig" doc:name="HTTP Request configuration" doc:id="5abe7c10-fe60-4a76-8a70-1cdedff3c27a" >
+		<http:request-connection protocol="HTTPS" host="${ops.host}" port="${ops.port}"/>
+		<http:default-headers >
+			<http:default-header key="Authorization" value="#[vars.startValues.headers.'authorization']" />
+		</http:default-headers>
+	</http:request-config>
+	<global-property doc:name="Global Property" name="cps.configServerBaseUrl" value="https://" />
+	<global-property doc:name="Global Property" name="cps.insecure" value="true" />
+	<global-property doc:name="Global Property" name="cps.projectName" value="common-mulesoft" />
+	<global-property doc:name="Global Property" name="cps.branchName" value="base" />
+	<global-property doc:name="Global Property" name="cps.instanceId" value="base" />
+	<global-property doc:name="Global Property" name="mule.env" value="DEV" />
+	<global-property doc:name="Global Property" name="cps.keyId" value="base" />
+	<global-property doc:name="Global Property" name="cps.clientId" value="x" />
+	<global-property doc:name="Global Property" name="cps.clientSecret" value="x" />
+	<global-property doc:name="Global Property" name="mule.server" value="localhost" />
+	<global-property doc:name="Global Property" name="api.http.port" value="8081" />
+	<global-property doc:name="Global Property" name="api.https.port" value="8082" />
+	<global-property doc:name="Global Property" name="api.version" value="1.0.0" />
+	<global-property doc:name="Global Property" name="api.id" value="15958180" />
+	<global-property doc:name="Global Property" name="project.version" value="1.0.0" />
+	<global-property doc:name="Global Property" name="request.api.path" value="/v1" />
+	<global-property doc:name="Global Property" name="request.api.host" value=".com" />
+	<global-property doc:name="Global Property" name="request.api.port" value="8080" />
+	<global-property doc:name="Global Property" name="api.URL" value="https://apis-dev-rtfint.ace.aaaclubnet.com/dev-name-backend/resource-name/v1.0" />
+	<global-property doc:name="Global Property" name="provider.URL" value="https://providerHost.com/providerPath" />
+	<global-property doc:name="Global Property" name="listener.tls.password" value="changeit" />
+	<global-property doc:name="Global Property" name="listener.tls.key.password" value="changeit" />
+	<global-property doc:name="Global Property" name="listener.host" value="0.0.0.0" />
+	<global-property doc:name="Global Property" name="my.CLIENT_ID" value="x" />
+	<global-property doc:name="Global Property" name="my.CLIENT_PW" value="x" />
+	<global-property doc:name="Global Property" name="http.host" value="x" />
+	<global-property doc:name="Global Property" name="http.port" value="443" />
+	<global-property doc:name="Global Property" name="http.path" value="x" />
+	<global-property doc:name="Global Property" name="http.responseTimeout" value="10000" />
+	<global-property doc:name="Global Property" name="http.listener.idleTimeout" value="30000" />
+	<global-property doc:name="Global Property" name="http.request.idleTimeout" value="30000" />
+	<global-property doc:name="Global Property" name="http.request.maxIdleTime" value="30000" />
+	<global-property doc:name="Global Property" name="db.host" value="x" />
+	<global-property doc:name="Global Property" name="db.port" value="8080" />
+	<global-property doc:name="Global Property" name="db.username" value="x" />
+	<global-property doc:name="Global Property" name="db.password" value="x" />
+	<global-property doc:name="Global Property" name="db.database" value="x" />   
+	<global-property doc:name="Global Property" name="db.queryTimeout" value="10000" />   
+	<global-property doc:name="Global Property" name="db.maxIdleTime" value="0" />   
+	<global-property doc:name="Global Property" name="db.checkoutTimeout" value="1000" />   
+	<global-property doc:name="Global Property" name="db.pooling.maxWait" value="0" />   
+	<global-property doc:name="Global Property" name="db.pooling.maxIdleTime" value="0" />   
+	<global-property doc:name="Global Property" name="db.pooling.idleConnectionTestPeriod" value="2" />    
+	<global-property doc:name="Global Property" name="ctg.host" value="x" />
+	<global-property doc:name="Global Property" name="ctg.port" value="x" />
+	<global-property doc:name="Global Property" name="ctg.password" value="x" />
+	<global-property doc:name="Global Property" name="ctg.user" value="x" />
+	<global-property doc:name="Global Property" name="ctg.serverName" value="x" />    
+	<global-property doc:name="Global Property" name="ctg.responseTimeout" value="10000" /> 
+	<global-property doc:name="Global Property" name="ctg.connectionTimeout" value="0" />
+	<global-property doc:name="Global Property" name="ctg.maxIdleTime" value="10000" />   
+	<global-property doc:name="Global Property" name="eviction.timeout" value="30000" />
+	<global-property doc:name="Global Property" name="eviction.checkInterval" value="15000" />   
+  <global-property doc:name="Global Property" name="tsoCreds.client_id" value="x" />
+  <global-property doc:name="Global Property" name="tsoCreds.client_secret" value="x" />    
+  <global-property doc:name="Global Property" name="tsoCreds.host" value="x" />        
+  <global-property doc:name="Global Property" name="tsoCreds.hostname" value="x" />   
+  <global-property doc:name="Global Property" name="tsoCreds.password" value="x" />
+  <global-property doc:name="Global Property" name="tsoCreds.path" value="x" />
+  <global-property doc:name="Global Property" name="tsoCreds.basePath" value="x" />
+	<global-property doc:name="Global Property" name="tsoCreds.port" value="443" />
+	<global-property doc:name="Global Property" name="tsoCreds.responseTimeout" value="10000" /> 
+	<global-property doc:name="Global Property" name="tsoCreds.idleTimeout" value="30000" />
+	<global-property doc:name="Global Property" name="tsoCreds.maxIdleTime" value="30000" /> 
+	<global-property doc:name="Global Property" name="api.methodName" value="x" />
+	<global-property doc:name="Global Property" name="ops.host" value="x" />
+	<global-property doc:name="Global Property" name="ops.id" value="x" />
+	<global-property doc:name="Global Property" name="ops.path" value="x" />
+	<global-property doc:name="Global Property" name="ops.secret" value="x" />
+	<global-property doc:name="Global Property" name="ops.port" value="443" />
+
+	<configuration-properties doc:name="Configuration properties" doc:id="8e928e25-1be7-44d8-a9f3-317850fa67d3" file="common.properties" />
+
+	<cps:config name="Configuration_properties_service_Config"
+		doc:name="Configuration-properties-service Config"
+		configServerBaseUrl="${cps.configServerBaseUrl}"
+		insecure="${cps.insecure}" projectName="${cps.projectName}" branchName="${cps.branchName}"
+		instanceId="${cps.instanceId}" envName="${mule.env}" keyId="${cps.keyId}" clientId="${cps.clientId}"
+		clientSecret="${cps.clientSecret}" configId="cps-config" usePEM="false" /> 
+	<http:request-config name="TSOCreds_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="0117573c-c39c-4614-a50f-657ecf71420e" basePath="/${tsoCreds.path}" responseTimeout="${tsoCreds.responseTimeout}">
+		<http:request-connection protocol="HTTPS" host="${tsoCreds.host}" port="${tsoCreds.port}" tlsContext="TLS_allow_unsigned_certs" connectionIdleTimeout="${tsoCreds.idleTimeout}"/>
+		<http:default-headers >
+			<http:default-header key="client_id" value="${tsoCreds.client_id}" />
+			<http:default-header key="client_secret" value="${tsoCreds.client_secret}" />
+			<http:default-header key="Accept" value="application/json" />
+			<http:default-header key="Authorization" value="#[attributes.headers.authorization]" />
+		</http:default-headers>
+	</http:request-config>
+	<http:request-config name="request_api_configuration" doc:name="request api configuration" basePath="${request.api.path}" responseTimeout="${http.responseTimeout}">
+		<http:request-connection host="${request.api.host}" port="${request.api.port}" protocol="HTTPS" tlsContext="TLS_allow_unsigned_certs" connectionIdleTimeout="${http.request.idleTimeout}"/>
+	</http:request-config>
+	<http:request-config name="PXP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2111342d-2568-45dd-a382-780dc66a514e" responseTimeout="${http.responseTimeout}">
+		<http:request-connection host="${http.host}" port="${http.port}" >
+			<http:authentication >
+				<http:basic-authentication username="#[vars.tsoCreds.tsoId]" password="#[vars.tsoCreds.password]"/>
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<tls:context name="TLS_allow_unsigned_certs" doc:name="TLS Context" doc:id="8275fb27-8de8-4aae-ba0a-ca65ad30c143" >
+		<tls:trust-store insecure="true" />
+	</tls:context>
+
+	<http:listener-config name="api-httpListenerConfig">
+		<http:listener-connection host="${listener.host}"
+			port="${api.https.port}" protocol="HTTPS" connectionIdleTimeout="${http.listener.idleTimeout}">
+			<tls:context >
+				<tls:key-store type="jks" path="httplistener.jks" alias="mule" keyPassword="${listener.tls.key.password}" password="${listener.tls.password}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+
+	<apikit:config name="api-config" raml="api.raml"
+		outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" api="ae-hello-world.raml"/>
+	
+	<eframework2:config name="Eframework_Config" doc:name="Eframework Config" doc:id="c8a18472-d309-4070-81dd-576c3c29b65d" applicationId="test-api" />
+	<http:request-config name="HTTP_Request_configuration_PostsData" doc:name="HTTP Request configuration" doc:id="2085d826-e10e-42cb-b248-96ffbe4c3584" >
+		<http:request-connection protocol="HTTPS" host="${postsData.host}" />
+	</http:request-config>
+
+</mule>

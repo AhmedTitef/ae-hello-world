@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule  xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+
+	<error-handler name="apikit-errors">
+		<on-error-propagate type="BACKEND:WARNING" enableNotifications="true" logException="true">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "299", message: "Warning"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[299]]></ee:set-variable>
+					<ee:set-variable variableName="httpReason"><![CDATA["Warning"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="c0238cab-c674-4d99-8930-4ea81c8ecab5" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:BAD_REQUEST, HTTP:BAD_REQUEST, HTTP:NOT_ACCEPTABLE, HTTP:PARSING" enableNotifications="true" logException="true">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "400", message: "Bad request"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">400
+					</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="cc43072c-380d-483f-a5ea-b90708aa2f5d" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="HTTP:CLIENT_SECURITY, HTTP:SECURITY, HTTP:UNAUTHORIZED, APP:UNAUTHORIZED, TSO:UNAUTHORIZED" enableNotifications="true" logException="true">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "401", message: "Unauthorized"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[401
+					]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="5415e5fa-e6e8-4f1e-ac93-dc3b0762333f" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="HTTP:FORBIDDEN" enableNotifications="true" logException="true">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "403", message: "Forbidden"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[403
+					]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="557c8e87-d0aa-46cc-9752-3035053beca5" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:NOT_FOUND,HTTP:NOT_FOUND">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "404", message: "Not Found"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">404
+					</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="0563ed7e-c321-49b2-9bae-e33960cb9fb0" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED, HTTP:METHOD_NOT_ALLOWED">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "405", message: "Method not allowed"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">405
+					</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="7357ca16-0868-4c16-9e4d-9ebed4b17092" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:NOT_ACCEPTABLE, HTTP:NOT_ACCEPTABLE">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "406", message: "Not acceptable"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">406
+					</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="17b285cd-ec48-4a33-9e79-41eae9c778ae" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE, HTTP:UNSUPPORTED_MEDIA_TYPE">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "415", message: "Unsupported media type"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">415
+					</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="58c291e5-8a56-4816-b48c-1e07c60aa44b" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate" doc:id="e5710c09-811b-42bf-8c20-a1ff5892fd67"
+			type="HTTP:TOO_MANY_REQUESTS">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="2d82b893-a1ad-44cd-b2ee-3bb0bb2e7b41">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "429", message: "Too Many Requests"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[429]]></ee:set-variable>
+					<ee:set-variable variableName="httpReason"><![CDATA["Too Many Requests"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "501", message: "Not Implemented"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">501
+					</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="f9c5cc98-a8fe-4859-8272-e02b6a76300d" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate type="BACKEND:ERROR" enableNotifications="true" logException="true">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "502", 
+	message: vars.errorTitle default "Backend error"
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[502]]></ee:set-variable>
+					<ee:set-variable variableName="httpReason"><![CDATA[vars.errorTitle default "Backend error"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="49d02417-d6bf-41b2-9f4f-452b5498ffa6" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true"
+			logException="true" doc:name="On Error Propagate" doc:id="e5710c09-811b-42bf-8c20-a1ff5892fd67"
+			type="HTTP:CONNECTIVITY, HTTP:RETRY_EXHAUSTED, HTTP:SERVICE_UNAVAILABLE">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd"
+				doc:id="2d82b893-a1ad-44cd-b2ee-3bb0bb2e7b41">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "503", message: "Service Unavailable"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[503]]></ee:set-variable>
+					<ee:set-variable variableName="httpReason"><![CDATA["Service Unavailable"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="7f3aebf0-62f9-4a54-b0c0-2f168513ac3b" name="showResponseStatus" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" type="HTTP:TIMEOUT">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+				xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="2d82b893-a1ad-44cd-b2ee-3bb0bb2e7b41">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "504", message: "Gateway Timeout"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[504]]></ee:set-variable>
+					<ee:set-variable variableName="httpReason" ><![CDATA["Gateway Timeout"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="ae47dbbc-97ec-4941-9a07-7777f09d5cdc" name="showResponseStatus"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="42de692f-3c18-40f7-b8de-dcb97aed1f62" type="ANY, APP:500,  IBMCTG:REQUEST_ERROR">
+			<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="a7c2b71c-d4f7-4127-b3d9-95d2863bd2f9">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{status: "500", message: "Internal API Error"}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[500]]></ee:set-variable>
+					<ee:set-variable variableName="httpReason"><![CDATA["Internal API Error"]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<flow-ref doc:name="Build ResponseStatus" doc:id="b3ba6e41-0d13-4a17-bb3f-bdb692c7b2a2" name="showResponseStatus" />
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="showResponseStatus" doc:id="86d67cdb-7a2b-49b6-b40e-0273cfecd446" >
+		<ee:transform doc:name="Transform Message" doc:id="6373af6c-77e7-4df8-ad63-415fd0105a7e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json 
+---
+{    
+
+    ResponseStatus:{
+        "type": if(vars.httpStatus == 299) "WARN" else "ERROR",
+		"title": payload.message default vars.httpReason default "",
+ 		"status": payload.status default vars.httpStatus default attributes.statusCode default "",
+		"detail": error.errorMessage.payload default error.description default "",
+        "correlationId": correlationId default "", 
+        "apiMethodName": vars.startValues.method default attributes.method default "", 
+        //"apiURL": "${api.URL}" default "https://${request.api.host}:${request.api.port}/${request.api.path}", //user provides
+		"apiURL": ("${api.URL}" ++ vars.startValues.requestPath) default ("${api.URL}" ++ attributes.requestPath) default ("https://${request.api.host}:${request.api.port}/${request.api.path}") default "", //for multiple endpoints
+        "apiVersion": "${api.version}",
+        "x-ConsumerRequestSentTimeStamp": vars.startValues.headers.'x-consumerrequestsenttimestamp' default message.attributes.headers.'X-ConsumerRequestSentTimeStamp' default "",
+        "apiRequestReceivedTimeStamp": vars.startValues.apiStartTime default "",
+        "apiResponseSentTimeStamp": now(),
+        "userId": authentication.properties.claims.muleSamAccountName default "",
+                "orchestrations": if(vars.startValues.headers.'x-debugmode' != 'true')
+        	(vars.orchestrations map (item, index) -> item filterObject (value, key) -> key as String != "providerResponse" and key as String !="providerRequestParameter")
+        		else
+        		vars.orchestrations,
+        (if(vars.startValues.headers.'x-debugmode' == 'true'){
+         "apiRequestParameter": vars.startValues.apiRequestParameter,}else {})
+    }
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<async doc:name="Async" doc:id="1fc1e321-fd70-4ff1-9530-39a97ed05100" >
+			<try doc:name="Try Encrypt Payload" doc:id="a55e8ee6-d64c-4fab-baaf-af20075e04a6">
+				<http:request method="POST" doc:name="Encrypt Request" doc:id="d3cbb61e-0fc8-4a81-8539-9dd1eec01e0c" config-ref="OpsConfig" path="#['${ops.path}']" sendCorrelationId="AUTO" target="loggedRequest">
+					<http:body><![CDATA[#[vars.startValues.apiRequestParameter]]]></http:body>
+					<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_secret" : "${ops.secret}" ,
+	"client_id" : "${ops.id}"
+}]]]></http:headers>
+				</http:request>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a2ef5bcb-1c2f-40ad-a144-73d0b2de19f9">
+						<set-variable value='#[{
+&#10;&#10;	
+&#10;&#10;Response:{&#10;	"title":"Encryption Unsuccessful",&#10;	"message": error.description default "",&#10;	"statusCode": error.muleMessage.attributes.statusCode as String default ""
+&#10;&#10;}
+&#10;&#10;}]' doc:name="Set Encryption Error" doc:id="d7df347f-7dcf-4cf9-9f4d-9ab8952da174" variableName="loggedData" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+			<json-logger:logger doc:name="JSON Logger" doc:id="081d3668-bc76-48b1-b4b7-8627522771d9" config-ref="JSON_Logger_Config" message="MESSAGE_HERE" tracePoint="END">
+			<json-logger:content><![CDATA[#[import modules::JSONLoggerModule
+var res = payload.'ResponseStatus'
+//fun checkType(statusCode) =(if((statusCode == 200) or (statusCode == null)) "info" else if(statusCode == 199) "warning" else "error") 
+fun responseStatusType(g) = if (g == "299") "WARN" else if (g startsWith("2")) "INFO" else if ((g startsWith("4")) or (g startsWith("5"))) "ERROR" else ""
+output application/json 
+---
+{	
+	Data: vars.loggedData.'Response' default "",
+	ResponseStatus:{
+		"type": res.'type', 
+		"title": res.'title',        
+		"status": res.'status' default "HTTP Status Code",
+		"detail": res.'detail',
+		"correlationId": res.'correlationId' default correlationId, 
+		"apiMethodName": vars.startValues.method default res.'apiMethodName' default "",
+	"apiURL": res.'apiURL' default "", 
+		"apiVersion": "${api.version}" default res.'apiVersion' default "",
+		"x-ConsumerRequestSentTimeStamp": vars.startValues.headers.'x-consumerrequestsenttimestamp' default res.'x-ConsumerRequestSentTimeStamp' default "", 
+		"apiRequestReceivedTimeStamp": vars.startValues.apiStartTime default res.'apiRequestReceivedTimeStamp' default "",
+        "apiResponseSentTimeStamp": now(),
+		"callingApplicationName":authentication.properties.clientName default "",
+  		"callingApplicationVersion":vars.startValues.headers.'x-callingapplicationversion' default "",
+		"userId": authentication.properties.claims.muleSamAccountName default "", 
+		"userEmployeeId":vars.startValues.headers.'x-useremployeeid' default "",
+  		"userComputerName":vars.startValues.headers.'x-usercomputername' default "",
+  		"userLocationNumber":vars.startValues.headers.'x-userlocationnumber' default "",
+ 		"userLocationName":vars.startValues.headers.'x-userlocationname' default "",
+        //Raw Responses are filtered out, to prevent logging sensitive data
+        "orchestrations":(vars.orchestrations map (item, index) -> item filterObject (value, key) -> key as String != "providerResponse" and key as String !="providerRequestParameter")
+}
+}]]]></json-logger:content>
+		</json-logger:logger>
+		</async>
+	</sub-flow>
+	<sub-flow name="defineCustomErrors" doc:id="a109eb0e-ed7f-4c53-b6f1-71ddca441332" doc:description="This flow contains the definitions for custom errors that the default error handler is able to catch. This flow is unused, but the project will not run unless the custom errors are defined in the project somewhere outside of the error handlers.">
+		<raise-error doc:name="BACKEND:WARNING" doc:id="a33783e7-a432-4f79-bd94-54dd17c843a7" type="BACKEND:WARNING" description="Warning" />
+		<raise-error doc:name="BACKEND:ERROR" doc:id="c24b4b11-0473-48a1-9527-4137ff9e16db" type="BACKEND:ERROR" description="Backend error" />
+		<raise-error doc:name="APP:UNAUTHORIZED" doc:id="1ab56f10-9d50-483d-a631-7f3703294969" type="APP:UNAUTHORIZED" />
+		<raise-error doc:name="TSO:UNAUTHORIZED" doc:id="ecc3a539-5b6a-4aa9-86f7-88a44502ea30" type="TSO:UNAUTHORIZED" />
+		<raise-error doc:name="APP:500" doc:id="92ab4c41-ee50-4a12-897e-943f852ecf5b" type="APP:500" />
+	</sub-flow>
+</mule>

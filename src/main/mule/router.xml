@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+	http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+    http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<flow name="api-main">
+		<http:listener path="${api.base}/*" doc:name="Listener" config-ref="api-httpListenerConfig">
+			<http:response statusCode="#[vars.httpStatus default 200]"
+				reasonPhrase="#[vars.httpReason]" >
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"X-Correlation-ID" : message.attributes.headers.'X-Correlation-ID',
+    "X-ConsumerRequestSentTimeStamp": message.attributes.headers.'X-ConsumerRequestSentTimeStamp',
+    "X-TraceLevel": message.attributes.headers.'X-TraceLevel'
+}]]]></http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]" reasonPhrase='#[vars.httpReason]'>
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<ee:transform doc:name="Set Start Vars" doc:id="32fbeda5-7100-49ef-ab68-9de09b3f50ff" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="startValues" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	headers: attributes.headers,
+	apiStartTime: now(),
+	method: attributes.method,
+	requestPath: attributes.requestPath,
+	apiRequestParameter: if(attributes.method == 'GET') attributes.queryParams default {} else payload
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[%dw 2.0
+&#10;output application/json
+&#10;---
+&#10;[]]" doc:name="Instantiate Orchestrations" doc:id="101a0c15-36d7-46e7-81ea-61d5577b9717" variableName="orchestrations"/>
+
+		<apikit:router doc:name="APIkit Router" config-ref="api-config"/>
+
+	</flow>
+
+</mule>

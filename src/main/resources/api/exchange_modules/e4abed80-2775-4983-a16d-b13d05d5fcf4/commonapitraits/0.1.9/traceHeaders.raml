@@ -1,0 +1,21 @@
+#%RAML 1.0 Trait
+
+usage: Provides the standard set of return code and their response formats
+### Request
+headers:
+  X-Correlation-ID:
+    required: false
+    type: string
+    example: "f99cc82b-d0d5-49ab-b3e5-9782d590dcf8"
+  X-ConsumerRequestSentTimeStamp:
+    required: false
+    type: string
+    example: "2019-08-26T13:32:10.64-07:00"
+  X-TraceLevel:
+    required: false
+    type: string
+    example: "2"
+  X-ShowRawResponse:
+    required: false
+    type: string
+    example: "True"

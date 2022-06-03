@@ -1,0 +1,163 @@
+"""
+NAME: RTF Developer Pipeline
+DESCRIPTION:
+- Used by developer to build, test and deploy the specified application and branch
+"""
+
+@Library('globalLibrary') _
+def gLib = new sharedLibrary()
+
+def logSeparator = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
+def abort(String message)
+{
+    echo "Aborting pipeline..."
+    currentBuild.result = 'ABORTED'
+    error(message)
+}
+
+def log(String message)
+{
+    echo "++++++++++++++++++++++++++ [ ${message} ]"
+}
+
+
+pipeline {
+    agent any
+    parameters {
+      string name: 'applicationName', defaultValue: 's-my-new-service', trim: true, description: 'This field is required.'
+      gitParameter name: 'sourceBranch', branchFilter: 'origin/(.*)', defaultValue: 'develop', description: '',  quickFilterEnabled: false, selectedValue: 'DEFAULT', sortMode: 'NONE', tagFilter: '*', type: 'PT_BRANCH'
+      choice name: 'deploymentTarget', choices: ['int-dev', 'b2c-dev', 'b2c-dev-mtls', 'int-dev-mtls'], description: 'b2c-dev, int-dev, b2c-dev-mtls (required).'
+      choice name: 'environment', choices: ['dev', 'dev2'], description: 'dev, dev2 (required).'
+      string name: 'gitURLprefix', defaultValue: 'tfs.ace.aaaclubnet.com/ACSC/MuleSoft/_git', trim: true, description: 'This field is required.'
+    }
+    
+    tools {
+        // Install the Maven version configured as "Maven 3.6.3" and add it to the path.
+        maven "Maven 3.6.3"
+		// Install the Jave version configured as "Java JDK 8" and add it to the path.
+        jdk  "Java JDK 8"
+    }
+
+    environment {
+        ANYPOINT = credentials('ANYPOINT_PLATFORM_CREDENTIALS') 
+        MULE_STANDALONE = 'false'
+        NEXUS_IQ_NAME = params.applicationName.trim()
+        NEXUS_IQ_STAGE = "build" //Pipeline specific scan. Default stages are 'build', 'stage-release', 'release', 'operate' 
+    }
+
+    stages {
+        stage('Setup Workspace'){
+            steps {
+
+                //input validation
+                script {
+                    if (params.applicationName.trim() == '') { abort("Pipeline parameter 'applicationName' cannot be blank.") }
+                    if (params.sourceBranch.trim() == '') { abort("Pipeline parameter 'sourceBranch' cannot be blank.") }
+                    if (params.deploymentTarget.trim() == '') { abort("Pipeline parameter 'deploymentTarget' cannot be blank.") }
+                    if (params.environment.trim() == '') { abort("Pipeline parameter 'environment' cannot be blank.") }
+                    if (params.gitURLprefix.trim() == '') { abort("Pipeline parameter 'gitURLprefix' cannot be blank.") }
+                }
+
+                echo logSeparator
+            }
+        }
+
+        stage('Checkout Source') {
+            steps {
+                script {
+                    echo "checkout changelog"
+                    echo "Branch: */${sourceBranch} "
+                    echo "Repo: https://${gitURLprefix}/${applicationName}"
+
+                    git branch: '${sourceBranch}', credentialsId: 'GID00744', url: 'https://${gitURLprefix}/${applicationName}'
+                    
+                    echo logSeparator
+                }
+           }
+        }
+
+        stage('Code Check') {
+            steps {
+                bat "mvn clean package -Pcode-check -Du=%ANYPOINT_USR% -Dp=%ANYPOINT_PSW% -DskipTests --settings ${environment}-settings.xml"
+                echo logSeparator
+            }
+        }
+
+        stage('Increment version') {
+            steps {
+				script {
+					bat "git checkout -B ${sourceBranch}"
+                    bat "git config user.name 'ace_build_user'"
+                    bat "git config user.email 'mule_ops@aaa-calif.com'"
+					bat 'mvn build-helper:parse-version versions:set -DnewVersion=${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.nextIncrementalVersion} versions:commit'
+                    bat "git status"
+                }
+				echo logSeparator
+            }
+        }
+
+        stage('Configure API') {
+            steps {
+                bat "mvn clean package -Pconfig-api -Du=%ANYPOINT_USR% -Dp=%ANYPOINT_PSW% -DskipTests --settings ${environment}-settings.xml"
+                echo logSeparator
+            }
+        }
+
+        stage('Push Changes') {
+            environment { 
+                GIT_AUTH = credentials('GID00744') 
+            }
+            steps {
+                script {
+                    pom = readMavenPom(file: 'pom.xml')
+                    projectVersion = pom.getVersion()
+                    bat (label: "add", returnStdout: true, script: "git add .")
+                    bat (label: "commit", returnStatus: true, script: "git commit --all -m \"Update version to ${projectVersion}.\"")
+                    bat (label: "push ${sourceBranch} to remote origin", returnStdout: true, script: "git push --set-upstream https://%GIT_AUTH_USR%:%GIT_AUTH_PSW%@${gitURLprefix}/${applicationName} ${sourceBranch}")
+                }
+		echo logSeparator
+            }
+        }
+        
+        stage('Build and Publish to Exchange') {
+            steps {
+                bat "mvn clean package deploy:deploy -Pexchange -Du=%ANYPOINT_USR% -Dp=%ANYPOINT_PSW% -DskipTests --settings ${environment}-settings.xml"
+                echo logSeparator
+            }
+        }
+
+        stage("Nexus IQ Scan") {
+            steps {
+                script{
+                gLib.runNexusIQScan()
+                }
+            }
+        }
+
+        stage('Deploy to Mule Standalone') {
+            when {
+                environment ignoreCase: true, name: 'MULE_STANDALONE', value: 'true'
+            }
+            steps {
+                script {
+                    pom = readMavenPom(file: 'pom.xml')
+                    projectVersion = pom.getVersion()
+					
+                    bat "mvn mule:deploy -Dmule.artifact=target\\${applicationName}-${projectVersion}-mule-application.jar -Phybrid -P${deploymentTarget} -Du=%ANYPOINT_USR% -Dp=%ANYPOINT_PSW% -DskipTests --settings ${environment}-settings.xml"
+                    echo logSeparator
+		}
+            }
+        }
+
+        stage('Deploy to RTF') {
+            when {
+                environment ignoreCase: true, name: 'MULE_STANDALONE', value: 'false'
+            }
+            steps {
+                bat "mvn mule:deploy  -Dmule.artifact=dummy -Prtf -P${deploymentTarget} -Du=%ANYPOINT_USR% -Dp=%ANYPOINT_PSW% -DskipTests --settings ${environment}-settings.xml"
+                echo logSeparator
+            }
+        }
+    }
+}

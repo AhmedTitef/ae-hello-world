@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="RetrieveTSOCredentials" doc:id="38c727b8-997d-4fb7-861c-cbe8312945f6">
+		<set-variable value='#[now() default ""]' doc:name="Set Start Time" doc:id="520ce14b-c955-48e4-b90b-a10de42e1773" variableName="startTime"/>
+		<ee:transform doc:name="Add Log Properties" doc:id="10fb94fc-d926-4f4a-a330-dc9df6a5c5e6">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="addLog"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"providerMethodName": "RetrieveTSOCredentials", 
+	"providerURL":"https://${tsoCreds.hostname}/${tsoCreds.basePath}",   
+	"systemName": "Admin", 
+	"systemType": "SQL", 
+	"apiType": "StoredProcedure",
+	"statusCode": attributes.statusCode, // placeholder is set (please replace) - http statusCode based on the response
+	"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+  "providerStatusMessage": attributes.reasonPhrase,
+	"providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+	"startTime": vars.startTime
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="GET TSO Credentials" doc:id="1df0a132-ef04-443b-96bc-8394f4a60e64" doc:description="Retrieves TSO credentials from s-retrieve-tso-credentials" config-ref="TSOCreds_HTTP_Request_configuration" path="/retrieveTSOCredentials" target="tsoCreds">
+			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="TSO:UNAUTHORIZED" />
+			<reconnect />
+		</http:request>
+		<choice doc:name="Check if TSO credentials is not empty" doc:id="9e22eb48-bbda-427a-b97b-5f5761936f63" >
+			<when expression="#[not isEmpty(vars.tsoCreds)]">
+				<set-variable value="#[200]" doc:name="httpStatus" doc:id="47535c09-9c2e-48ad-99d1-72ff6f275fe6" variableName="httpStatus"/>
+				<flow-ref doc:name="Build Log" doc:id="64300ea6-f82d-4b92-877e-cbd45f1265a1" name="addLog" />
+			</when>
+			<otherwise >
+				<set-variable value="#[400]" doc:name="httpStatus" doc:id="432dbaac-622a-43fe-a6b1-f5acc789015f" variableName="httpStatus" />
+				<set-variable value="Invalid JWT provided" doc:name="httpReason" doc:id="643d732f-2aaa-481b-9e21-5f78018214ed" variableName="httpReason" />
+			</otherwise>
+		</choice>		
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3f51b7d4-292f-4845-9d07-7d8dc6406334">
+								<ee:transform doc:name="Add Log Properties" doc:id="d14c10e1-ef29-4299-9aa2-1bfa6cd8945e" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"providerMethodName": "RetrieveTSOCredentials", // name of the service 
+	"providerURL":"https://${tsoCreds.hostname}/${tsoCreds.basePath}", // placeholder (please update/replace) - user provides via cpsfile   
+	"systemName": "Admin", // example:MACS/Travel/Admin 
+	"systemType": "SQL", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+	"apiType": "StoredProcedure",
+	"statusCode": attributes.statusCode, // placeholder is set (please replace) - http statusCode based on the response
+	"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+  	"providerStatusMessage": attributes.reasonPhrase,
+	"providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+	"startTime": vars.startTime default ""
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="addErrorLog" doc:id="e3defa30-5926-44c3-99a0-22b1213b62c3" name="addErrorLog" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	</mule>

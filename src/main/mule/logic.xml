@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd">
+
+
+	<flow name="get:\ping:api-config">
+
+		<set-variable value="s-my-new-service" doc:name="moduleName" variableName="moduleName"/>
+
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+			xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="eabec06a-cb68-4a89-b6dc-3bdb41c05212">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+module: vars.moduleName,
+projectVersion: "${project.version}",
+apiVersion: "${api.version}",
+mule_env: "${mule.env}",
+status: "200",
+message: "Alive",
+correlationId: correlationId
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[200]]></ee:set-variable>
+				<ee:set-variable variableName="httpReason" ><![CDATA["OK"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Build Response" doc:id="0850226a-073b-4fd5-9da1-591a34a5aeb1" name="responseStatus_success"/>
+	</flow>
+	<flow name="get:\posts:api-config">
+
+		<set-variable value="s-my-new-service" doc:name="moduleName" variableName="moduleName"/>
+
+		<http:request method="GET" doc:name="Request" doc:id="e48eb5bf-dd81-4ae1-b6db-40f704e4bd66" config-ref="HTTP_Request_configuration_PostsData" path="/posts"/>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+			xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="22c924bb-d2a6-4af6-b280-d1d2951bf4da">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpStatus" ><![CDATA[200]]></ee:set-variable>
+				<ee:set-variable variableName="httpReason" ><![CDATA["OK"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Build Response" doc:id="ab55a2ad-e537-4160-a5a4-06b4ca940133" name="responseStatus_success"/>
+	</flow>
+
+</mule>

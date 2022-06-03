@@ -1,0 +1,3 @@
+readyAPI project will be run from automated jenkins pipeline
+1. must be in readyAPI folder
+2. must follow naming convention: <app-name>-readyapi-project.xml

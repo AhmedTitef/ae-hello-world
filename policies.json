@@ -1,0 +1,51 @@
+[{
+		"configurationData": {
+			"credentialsOriginHasHttpBasicAuthenticationHeader": "customExpression",
+			"clientIdExpression": "#[attributes.headers['client_id']]",
+			"clientSecretExpression": "#[attributes.headers['client_secret']]"
+		},
+		"policyTemplateId": 294,
+		"groupId": "68ef9520-24e9-4cf2-b2f5-620025690913",
+		"assetId": "client-id-enforcement",
+		"assetVersion": "1.2.3"
+	},
+	{
+		"configurationData": {
+			"rateLimits": [{
+				"timePeriodInMilliseconds": 1000,
+				"maximumRequests": 100
+			}],
+			"clusterizable": true,
+			"exposeHeaders": true
+		},
+		"policyTemplateId": "rate-limiting",
+		"assetId": "rate-limiting",
+		"assetVersion": "1.3.5",
+		"groupId": "68ef9520-24e9-4cf2-b2f5-620025690913"
+	},
+	{
+
+		"configurationData": {
+			"jwtOrigin": "httpBearerAuthenticationHeader",
+			"jwtExpression": "#[attributes.headers['jwt']]",
+			"signingMethod": "rsa",
+			"signingKeyLength": 256,
+			"jwtKeyOrigin": "jwks",
+			"textKey": "your-(256|384|512)-bit-secret",
+			"jwksUrl": "https://login.microsoftonline.com/d5f618ff-2951-4904-8f7e-999c2dd97ab2/discovery/keys/",
+			"jwksServiceTimeToLive": 60,
+			"skipClientIdValidation": true,
+			"clientIdExpression": "#[vars.claimSet.client_id]",
+			"validateAudClaim": false,
+			"mandatoryAudClaim": false,
+			"supportedAudiences": "aud.example.com",
+			"mandatoryExpClaim": true,
+			"mandatoryNbfClaim": false,
+			"validateCustomClaim": false
+		},
+		"policyTemplateId": 299253,
+		"groupId": "68ef9520-24e9-4cf2-b2f5-620025690913",
+		"assetId": "jwt-validation",
+		"assetVersion": "1.1.3"
+	}
+]

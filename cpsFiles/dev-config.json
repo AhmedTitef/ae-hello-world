@@ -1,0 +1,67 @@
+{
+  "projectName": "s-my-new-service",
+  "branchName": "base",
+  "instanceId": "base",
+  "keyId": "base",
+  "envName": "DEV",
+  "imports": [],
+  "properties": {
+    "my.CLIENT_ID": "xxx",
+    "my.CLIENT_PW": "xxx",
+    "secure.properties": "my.CLIENT_ID,my.CLIENT_PW",
+    "tsoCreds.hostname": "tsoHostName",
+    "api.methodName": "api method name",
+    "api.URL": "api url",
+    "provider.URL":"provider URL",
+    "tsoCreds.basePath": "tso creds base path",
+
+    "http.listener.idleTimeout": "30000",
+    "http.request.idleTimeout": "30000",
+    "http.request.maxIdleTime": "30000",
+    "http.host":"",
+    "http.port":"",
+    "http.path":"",
+    "http.responseTimeout": "10000",
+
+    "db.host": "",
+    "db.port": "",
+    "db.username": "",
+    "db.database": "",
+    "db.queryTimeout": "10000",	
+    "db.maxIdleTime": "10000",
+    "db.checkoutTimeout": "1000",
+    "db.pooling.maxWait": "0",
+    "db.pooling.maxIdleTime": "0",
+    "db.pooling.idleConnectionTestPeriod": "2",
+
+    "ctg.host":"",
+    "ctg.port":"",
+    "ctg.user":"",
+    "ctg.serverName":"",
+    "ctg.connectionTimeout": "0",
+    "ctg.responseTimeout": "10000",
+    "ctg.maxIdleTime": "10000",
+
+    "tsoCreds.client_id": "x",
+    "tsoCreds.client_secret": "x",
+    "tsoCreds.host": "apis-dev-rtfint.aceclublab.com",
+    "tsoCreds.path": "dev-s-retrieve-tso-credentials/v1/",
+    "tsoCreds.port": "",
+    "tsoCreds.responseTimeout": "10000",
+    "tsoCreds.idleTimeout": "30000",
+    "tsoCreds.maxIdleTime": "30000",
+
+    "server.principal":"x",
+    "client.principal":"x",
+    "keytab.path":"x",
+    "keytab.fileName": "x",
+
+    "ops.id": "x",
+    "ops.secret": "x",
+    "ops.host": "apis-dev-rtfint.ace.aaaclubnet.com",
+    "ops.path": "/dev-ops-mulesoft/encrypt/v1.0",
+    "ops.port": "",
+    "postsData.host":"jsonplaceholder.typicode.com"
+    
+  }
+}

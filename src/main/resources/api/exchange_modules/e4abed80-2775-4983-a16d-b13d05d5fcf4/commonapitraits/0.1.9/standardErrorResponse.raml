@@ -1,0 +1,44 @@
+#%RAML 1.0 Trait
+
+responses:
+      299:
+        description:
+          There was a warning returned from the CICS backend program.
+      400: 
+        description:
+          The server cannot or will not process the request due to something that is perceived to be a client error (e.g., malformed request syntax, invalid request message framing, or deceptive request routing).
+      401:
+        description:
+          The supplied credentials are invalid.
+        body:
+          application/json:
+      403:
+        description:
+          There is a problem with the credentials that were provided.
+      404: 
+        description:
+          The server cannot find the requested resource.
+      405:
+        description:
+          A request was made of a resource using a request method not supported by that resource; for example, using GET on a form which requires data to be presented via POST, or using PUT on a read-only resource.
+      406: 
+        description:
+          The target resource does not have a current representation that would be acceptable to the user agent.
+      415:
+        description:
+          The accept header specified an unsupported media type.
+      429:
+        description:
+          Too many requests have been sent in a given amount of time.
+      500:   
+        description:
+          An internal processing error occurred while processing the API request.
+      501:
+        description:
+          The application does not support the functionality required to fulfill the request.
+      503:
+        description:
+          The application is not ready to handle the request.
+      504: 
+        description:
+          Timeout during application run time.

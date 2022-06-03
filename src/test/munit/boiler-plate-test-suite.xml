@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="boiler-plate-test-suite.xml" />
+	<munit:test name="boiler-plate-test" doc:id="f9e384d5-014e-43ca-8a21-1e7aeebc2e20" >
+		<munit:behavior >
+			<munit:set-event doc:name="Set Event / Set Input, Attributes, and Variables" doc:id="7a773b2f-e4ff-418d-86a2-77f0f693d845" />
+			<munit-tools:spy doc:name="Spy on a processor" doc:id="ecf2389c-61aa-47de-aa2e-cb5074e6bb82" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Retrieve TSO Credentials" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="6b9ee85b-1f0e-40eb-96f5-f2a286d065df" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="RetrieveTSOCredentials" attributeName="name" />
+					<munit-tools:with-attribute whereValue="tsoCreds" attributeName="target" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert-that doc:name="Before the call, Assert that..." doc:id="555278a1-d8fb-4c75-89ed-3bb27371f5ef" is="#[MunitTools::notNullValue()]" expression="#[payload]"/>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert-that doc:name="After the call, Assert that..." doc:id="4644bb97-e07a-4789-b528-bf3159d559b9" is="#[MunitTools::notNullValue()]" expression="#[payload]"/>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit-tools:mock-when doc:name="Mock when - Mock the data for a processor / request" doc:id="479624b2-afce-4906-acbd-1d8ea2d4688b" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="GET" attributeName="method" />
+					<munit-tools:with-attribute whereValue="GET TSO Credentials" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="1df0a132-ef04-443b-96bc-8394f4a60e64" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Retrieves TSO credentials from s-retrieve-tso-credentials" attributeName="doc:description" />
+					<munit-tools:with-attribute whereValue="TSOCreds_HTTP_Request_configuration" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="/retrieveTSOCredentials" attributeName="path" />
+					<munit-tools:with-attribute whereValue="tsoCreds" attributeName="target" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value='#[
+&#10;	{
+&#10;    	"tsoId": "MULE123",
+&#10;    	"password": "password",
+&#10;    	"base64": "ABCDEFGHIJKLMNOP"
+&#10;	}
+&#10;]' mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow Reference for the flow / endpoint to test" doc:id="d7b58aeb-001c-46ea-a7b5-e2dff4d305f1" name="RetrieveTSOCredentials"/>
+		</munit:execution>
+		<munit:validation >
+		<munit-tools:assert doc:name="Path is formatted correctly" doc:id="0474e2a7-6655-4b6f-9634-0c0029606661" message="Method name is followed by a version number in the path">
+				<munit-tools:that ><![CDATA[#[vars.startValues.attributes.requestPath matches (/^\/[a-zA-Z]+\/v[0-9]+\.[0-9]+$/)]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:assert-equals doc:name="Assert that the status code to check for is as expected (e.g. 200)" doc:id="f16d4e63-b056-4e8a-9ab5-e323dae74b2d" actual="#[vars.httpStatus]" expected="#[200]" message="vars.httpStatus does not equal 200"/>
+			<munit-tools:assert doc:name="Assert expression payload must not be null" doc:id="43a58bbd-dcdb-448d-80c7-20f451da93b8" message="Assertion that payload must not be null failed"/>
+			<munit-tools:assert-that doc:name="Assert that the payload exists" doc:id="d136bf8c-2359-4ff9-98f1-791e7d131afb" is="#[MunitTools::notNullValue()]" expression="#[payload]" message="Assertion that payload must not be null failed"/>
+			<munit-tools:assert-equals doc:name="Assert equals expected value (this as an example node and will fail unmodified)" doc:id="e7543674-27d8-480f-9cee-8524224e7b6e" actual="#[payload]" expected='#[{"exampleField": "example Property"}]'/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:ibmctg="http://www.mulesoft.org/schema/mule/ibmctg"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ibmctg http://www.mulesoft.org/schema/mule/ibmctg/current/mule-ibmctg.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+
+	<flow name="exampleWebFlow" doc:id="ccd37def-c706-418f-af05-c48e48e3e612" >
+		<set-variable value="#[now()]" doc:name="startTime" doc:id="df9932c1-a3ab-43c7-a806-0888674a85e6" variableName="startTime"/>
+		<http:request method="GET" doc:name="HTTP Request" doc:id="f14ad9a2-4e7b-4baf-868f-33426927623a" config-ref="HTTP_Request_configuration" path="#[p('http.path')]"/>
+		<ee:transform doc:name="Add Log" doc:id="6d62b4da-5050-4805-a9cc-00ee6ca0f117" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"providerMethodName": "", // name of the service 
+	"providerURL":"${http.host}:${http.port}/${http.path}", // placeholder (please update/replace) - user provides via cpsfile   
+	"systemName": "", // example:MACS/Travel/Admin 
+	"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+	"apiType": "REST",
+	"statusCode": attributes.statusCode default 200, // placeholder is set (please replace) - http statusCode based on the response
+	"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+  "providerStatusMessage": attributes.reasonPhrase,
+	"providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+	"startTime": vars.startTime default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Build Log" doc:id="08d63252-5a9a-41da-9eb8-f11d026381e9" name="addLog"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="01f11c84-fb52-4f7d-8628-b4572e15ee88" >
+				<ee:transform doc:name="Add Log" doc:id="6d62b4da-5050-4805-a9cc-00ee6ca0f117" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+		output application/json
+		---
+		{
+      "providerMethodName": "", // name of the service 
+			"providerURL":"${http.host}:${http.port}/${http.path}", // placeholder (please update/replace) - user provides via cpsfile   
+			"systemName": "", // example:MACS/Travel/Admin 
+			"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+			"apiType": "REST",
+			"statusCode": attributes.statusCode default 500, // placeholder is set (please replace) - http statusCode based on the response
+			"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+      "providerStatusMessage": attributes.reasonPhrase,
+			"providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+			"startTime": vars.startTime default ""
+		}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="addErrorLog" doc:id="31d0bb96-cd60-4f37-b6e5-8a5ec622fb62" name="addErrorLog"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+		<flow name="exampleSQLFlow" doc:id="289bb2b1-3433-452b-aae3-c1956086b4ca" >
+		<set-variable value="#[now()]" doc:name="startTime" doc:id="6b2dbd1f-5296-417e-b76f-342a06c2a958" variableName="startTime"/>
+		<db:stored-procedure doc:name="Stored procedure" doc:id="07c8b3c3-b189-47ca-905b-be8fcbebb96b" config-ref="Example_Database_Config" queryTimeout="${db.queryTimeout}" queryTimeoutUnit="MILLISECONDS">
+			<db:sql ><![CDATA[#["{call YOUR_STORED_PROC_HERE ($("value1" default ''), '$("value2" default '')')}"]]]></db:sql>
+		</db:stored-procedure>
+		<ee:transform doc:name="Add Log" doc:id="30c6a259-f97d-4db1-8dbd-a83ae4746776" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"providerMethodName": "", // name of the service 
+	"providerURL":"${db.host}", // placeholder (please update/replace) - user provides via cpsfile   
+	"systemName": "", // example:MACS/Travel/Admin 
+	"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+	"apiType": "StoredProcedure",
+	"statusCode": attributes.statusCode default 200, // placeholder (please update/replace) - http statusCode based on the response
+	"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+  "providerStatusMessage": attributes.reasonPhrase,
+  "providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+	"startTime": vars.startTime default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Build Log" doc:id="083ba26b-9daa-4233-a211-5e275f2c0aa9" name="addLog"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="60711190-79c2-4e99-ae88-067763427695" >
+				<ee:transform doc:name="Add Log" doc:id="30c6a259-f97d-4db1-8dbd-a83ae4746776" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+		output application/json
+		---
+		{
+			"providerMethodName": "", // name of the service 
+			"providerURL":"${db.host}", // placeholder (please update/replace) - user provides via cpsfile   
+			"systemName": "", // example:MACS/Travel/Admin 
+			"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+			"apiType": "StoredProcedure",
+			"statusCode": attributes.statusCode default 500, // placeholder (please update/replace) - http statusCode based on the response
+			"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+      "providerStatusMessage": attributes.reasonPhrase,
+      "providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+			"startTime": vars.startTime default ""
+		}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="addErrorLog" doc:id="0424033d-ce5a-435a-9572-d694a3d5dc66" name="addErrorLog"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="exampleCTGFlow" doc:id="e0e15cad-57f4-4d15-a225-a2a174f7e5c8" >
+		<set-variable value='#[now() default ""]' doc:name="startTime" doc:id="2de24cfe-3784-4fb1-be83-ea22f6ff63a0" variableName="startTime" />
+		<ee:transform doc:name="Build from Copybook" doc:id="224b5042-57c6-4ad1-b87f-f770d5bd5867" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/flatfile 
+//schemaPath='schemas/YOUR_COPYBOOK.ffd', 
+encoding="IBM037"
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ibmctg:execute-using-commarea doc:name="Execute using commarea" doc:id="0a3b4ec0-c480-4d41-9cc9-79438960507c" config-ref="IBM_CTG_Config">
+			<ibmctg:commarea-request-type programName="YOUR_RM_HERE" commareaLength="32500" replyLength="32500"/>
+		</ibmctg:execute-using-commarea>
+		<set-payload value="#[payload]" doc:name="Set Type to Flatfile" doc:id="b9e69e66-5beb-4d0f-9995-ed9440c0f904" mimeType='application/flatfile; missingvalues=none; truncatedependingon=true; segmentident=EXPORTS; recordparsing=lenient;schemaPath=""' encoding="IBM037"/>
+		<ee:transform doc:name="Flatfile to JSON" doc:id="bf7ef7f9-c850-4310-9e4f-788f9763453c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Save providerStatusDetails" doc:id="23b10cc6-ad2d-4768-bfc6-8d5474889e41" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="providerStatusDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    'HOST-SERVICE-STATUS': payload[0].'HOST-SERVICE-STATUS' default "",
+    'ASR-CALL-STACK': payload[0].'ASR-CALL-STACK' default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>		
+		<choice doc:name="Check Severity Code" doc:id="05c5b27b-15cc-4d18-8701-78045190160b">
+			<when expression="#[vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' == '1' or vars.providerStatusDetails.'ASR-CALL-STACK'.'ASR-SEVERITY' == '1']">
+				<set-variable value="Backend System Error" doc:name="Error Status Title" doc:id="3d667e1e-84df-4188-a6b5-6fe104184929" variableName="errorTitle" />
+				<raise-error doc:name="System Error BACKEND:ERROR" doc:id="4932b2e2-c61a-48d2-8fc1-3d889f7acb49" type="BACKEND:ERROR" description="#[vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-MESSAGE']"/>
+			</when>
+			<when expression="#[vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' == '2' or vars.providerStatusDetails.'ASR-CALL-STACK'.'ASR-SEVERITY' == '2']">
+        <set-variable value="Backend Application Error" doc:name="Error Status Title" doc:id="d4c76797-5749-40a9-87b2-62835aa394b8" variableName="errorTitle"/>
+				<raise-error doc:name="Application Error BACKEND:ERROR" doc:id="5cacc1e9-3b9e-4258-a558-38a1f56e76b5" type="BACKEND:ERROR" description="#[vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-MESSAGE']"/>
+			</when>
+			<when expression="#[vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' == '3' or vars.providerStatusDetails.'ASR-CALL-STACK'.'ASR-SEVERITY' == '3' or vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' == '4' or vars.providerStatusDetails.'ASR-CALL-STACK'.'ASR-SEVERITY' == '4']">
+				<raise-error doc:name="APP:FORBIDDEN" doc:id="2371f8da-0ccc-449d-95a7-cb15dee44610" type="APP:FORBIDDEN" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Add Log Properties" doc:id="7c224f2c-8d15-4303-98c6-4cca11410a17">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="addLog"><![CDATA[%dw 2.0
+output application/json
+
+---
+{
+	"providerMethodName": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-PROGRAM-NAME', 
+	"providerURL":"${ctg.host}",   
+	"systemName": "", // example:MACS/Travel/Admin 
+	"systemType": "", // example:MF(Mainframe)/SQL/WebService/
+	"apiType": "CTG",
+	"statusCode": 200,
+	"providerStatusCode": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' default "",
+  "providerStatusMessage": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-MESSAGE' default "",
+  "providerStatusCode": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' default "",
+  "providerStatusDetails": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'P-STR',
+	"startTime": vars.startTime
+}]]></ee:set-variable>
+			</ee:variables>
+				</ee:transform>        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+          xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="7edbb8ad-a182-45e5-8bef-d1b340c6426c" doc:name="Map RM Response to Enterprise Data Model">
+          <ee:message>
+            <ee:set-payload><![CDATA[%dw 2.0
+    output application/json
+    ---
+    
+			payload //map this to your schema
+    ]]></ee:set-payload>
+          </ee:message>
+        </ee:transform>
+        <flow-ref doc:name="Build Log" doc:id="b1825f4d-fde1-4c7d-822b-b69d4a4d2c55" name="addLog"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cd63d1cd-d8e2-4d00-9d5e-0c921d6f7131" >
+				<ee:transform doc:name="Add Error Log" doc:id="8db263ac-772d-42d0-8bcc-e83337086b18">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="addLog"><![CDATA[%dw 2.0
+import modules::TransformStatusCodes
+output application/json
+var statusCode = payload[0].'HOST-SERVICE-STATUS'.'HOST-SEVERITY' default ""
+---
+{
+	"providerMethodName": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-PROGRAM-NAME' default "RM_NAME", 
+	"providerURL":"${ctg.host}",   
+	"systemName": "", // example:MACS/Travel/Admin 
+	"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+	"apiType": "CTG",
+	"statusCode": TransformStatusCodes::transformCTGHostServiceCode(statusCode),
+	"providerStatusCode": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-SEVERITY' default "",
+  "providerStatusMessage": vars.providerStatusDetails.'HOST-SERVICE-STATUS'.'HOST-MESSAGE' default "",
+  "providerStatusDetails": vars.providerStatusDetails,
+    // "providerStatusDetails": write(providerStatusDetails, "application/json")
+	"startTime": vars.startTime default "",
+	//"cicsErrorSecurityFlag": if ((statusCode == 403) and (vars.addLog.cicsErrorSecurityFlag != true)) true else false
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="addErrorLog" doc:id="25ac3905-243a-42bd-8db4-dd5123b51edd" name="addErrorLog" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="examplePXPFlow" doc:id="f8656fe0-c9b0-4f3d-aead-b2f0e05d12d1" >
+		<flow-ref doc:name="Retrieve TSO Credentials" doc:id="6b9ee85b-1f0e-40eb-96f5-f2a286d065df" name="RetrieveTSOCredentials" target="tsoCreds"/>
+		<http:request method="POST" doc:name="SOAP Request to RM" doc:id="979eabab-501c-4cf0-b02e-a4224a9a25f3" doc:description="/RM412AAC/RMA11ADC
+&#10;
+&#10;'Basic ' ++ vars.tsoCreds.base64
+&#10;
+&#10;&quot;Authorization&quot; &quot;Basic TVVMRVQwMjp0MnhhZm5K&quot;" config-ref="PXP_Request_configuration" path="${http.path}" >
+			<error-mapping sourceType="HTTP:UNAUTHORIZED" targetType="APP:UNAUTHORIZED" />
+			<http:headers ><![CDATA[#[output application/java
+
+---
+
+{
+	"Authorization" : "Basic " ++ vars.tsoCreds.'base64' default '',
+	"Content-Type" : "text/xml"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Add Log" doc:id="319a0088-b90b-48ad-bafc-4a4bc96711b6" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "providerMethodName": "", // name of the service 
+	"providerURL":"", // placeholder (please update/replace) - user provides via cpsfile   
+	"systemName": "", // example:MACS/Travel/Admin 
+	"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+	"apiType": "",
+	"statusCode": attributes.statusCode default 200, // placeholder (please update/replace) - http statusCode based on the response
+	"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+  "providerStatusMessage": attributes.reasonPhrase,
+  "providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+	"startTime": vars.startTime default ""
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Build Log" doc:id="7477cc15-c1a6-4fc3-b4ee-03c5830af372" name="addLog"/>
+		<ee:transform doc:name="XML to JSON" doc:id="d38e8d8d-2338-49a2-9c29-1100b03bf302" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a45915bc-2afc-4e7a-8462-86a208777b2e" >
+				<ee:transform doc:name="Add Log" doc:id="319a0088-b90b-48ad-bafc-4a4bc96711b6" >
+					<ee:message />
+					<ee:variables >
+						<ee:set-variable variableName="addLog" ><![CDATA[%dw 2.0
+		output application/json
+		---
+		{
+      "providerMethodName": "", // name of the service 
+			"providerURL":"", // placeholder (please update/replace) - user provides via cpsfile   
+			"systemName": "", // example:MACS/Travel/Admin 
+			"systemType": "", // example:MF(Mainframe)/SQL/WebService/WebServiceExternal
+			"apiType": "",
+			"statusCode": attributes.statusCode default 500, // placeholder (please update/replace) - http statusCode based on the response
+			"providerStatusCode": attributes.statusCode, // provide special statusCode of service if available
+      "providerStatusMessage": attributes.reasonPhrase,
+      "providerStatusDetails": {}, // provide entity/details if the service response has response status to share
+			"startTime": vars.startTime default ""
+		}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="addErrorLog" doc:id="5249b4f6-7dd7-4bc4-b265-0e3309109b8d" name="addErrorLog" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

@@ -1,0 +1,248 @@
+<?xml version="1.0"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+	<activeProfiles>
+		<activeProfile>global-settings</activeProfile>
+		<activeProfile>standard-repositories</activeProfile>
+	</activeProfiles>
+
+	<profiles>
+		<profile>
+			<id>global-settings</id>
+			<properties>
+				<master.org.name>ACE</master.org.name>
+				<company.abbr>ace72-</company.abbr>
+				<my-organization-anypoint-orgid>01a4664d-9e16-454b-a14c-59548ef896b5</my-organization-anypoint-orgid>
+				<api.businessGroup>APIS</api.businessGroup>
+				<api.businessGroupId>e4abed80-2775-4983-a16d-b13d05d5fcf4</api.businessGroupId>
+
+				<mule.artifact>target/${project.artifactId}-1.0.0-mule-application.jar</mule.artifact>
+
+				<instance.id>base</instance.id>
+
+				<corporate-artifact-repository-url>https://repo.ace.aaaclubnet.com/repository/maven-release</corporate-artifact-repository-url>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>no-environment</id>
+			<activation>
+				<property>
+					<name>env</name>
+					<value></value>
+				</property>
+			</activation>
+			<properties>
+				<env>local</env>
+				<deploy.environment>LOCAL</deploy.environment>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>config-api</id>
+			<properties>
+				<deploy.environment>DEV</deploy.environment>
+				<approval>empty-sla-tiers-list</approval>
+				<policies>policies.json</policies>
+			</properties>
+		</profile>
+		
+		<!--
+			Development Environment Names
+		-->		
+
+		<profile>
+			<id>b2b-dev</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.rtf-target>apis-dev-rtfdmzb2b</deploy.rtf-target>
+
+				<rtf.domain>apis-dev-rtfdmzb2b.aceclublab.com</rtf.domain>
+				<rtf.instances>1</rtf.instances>
+				<deploymentTimeout>300000</deploymentTimeout>
+
+				<rtf.cpuReserved>50m</rtf.cpuReserved>
+				<rtf.cpuMax>1000m</rtf.cpuMax>
+				<rtf.memoryReserved>1000Mi</rtf.memoryReserved>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>b2c-dev</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.rtf-target>apis-dev-rtfdmzb2c</deploy.rtf-target>
+
+				<rtf.domain>apis-dev-rtfdmzb2c.aceclublab.com</rtf.domain>
+				<rtf.instances>1</rtf.instances>
+				<deploymentTimeout>300000</deploymentTimeout>
+
+				<rtf.cpuReserved>50m</rtf.cpuReserved>
+				<rtf.cpuMax>1000m</rtf.cpuMax>
+				<rtf.memoryReserved>1000Mi</rtf.memoryReserved>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>b2c-dev-mtls</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.rtf-target>apis-dev-rtfdmzb2c</deploy.rtf-target>
+
+				<rtf.domain>apis-dev-rtfdmzb2c-mtls.aceclublab.com</rtf.domain>
+				<rtf.instances>1</rtf.instances>
+				<deploymentTimeout>300000</deploymentTimeout>
+
+				<rtf.cpuReserved>50m</rtf.cpuReserved>
+				<rtf.cpuMax>1000m</rtf.cpuMax>
+				<rtf.memoryReserved>1000Mi</rtf.memoryReserved>
+			</properties>
+		</profile>
+
+
+		<profile>
+			<id>int-dev</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.rtf-target>apis-dev-rtfint</deploy.rtf-target>
+
+				<rtf.domain>apis-dev-rtfint.ace.aaaclubnet.com</rtf.domain>
+				<rtf.instances>1</rtf.instances>
+				<deploymentTimeout>300000</deploymentTimeout>
+
+				<rtf.cpuReserved>50m</rtf.cpuReserved>
+				<rtf.cpuMax>1000m</rtf.cpuMax>
+				<rtf.memoryReserved>1000Mi</rtf.memoryReserved>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>int-dev-mtls</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.rtf-target>apis-dev-rtfint</deploy.rtf-target>
+
+				<rtf.domain>apis-dev-rtfint-mtls.ace.aaaclubnet.com</rtf.domain>
+				<rtf.instances>1</rtf.instances>
+				<deploymentTimeout>300000</deploymentTimeout>
+
+				<rtf.cpuReserved>50m</rtf.cpuReserved>
+				<rtf.cpuMax>1000m</rtf.cpuMax>
+				<rtf.memoryReserved>1000Mi</rtf.memoryReserved>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>msadmzb2c-dev</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.target>apis-dev-msadmzb2c</deploy.target>
+				<deploy.targetType>server</deploy.targetType>
+
+				<deploymentTimeout>300000</deploymentTimeout>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>msadmzb2c-qa</id>
+			<properties>
+				<env>dev</env>
+				<deploy.environment>DEV</deploy.environment>
+				<rtf.name>${env}-${project.artifactId}</rtf.name>
+				<hybrid.name>${env}-${project.artifactId}</hybrid.name>
+				<deploy.target>apis-qa-msadmzb2c</deploy.target>
+				<deploy.targetType>server</deploy.targetType>
+
+				<deploymentTimeout>300000</deploymentTimeout>
+			</properties>
+		</profile>
+
+		<!--
+			These are the repositories that will be used to resolve dependencies
+		-->
+		<profile>
+			<id>standard-repositories</id>
+			<repositories>
+				<repository>
+					<id>Nexus-IS</id>
+					<name>Corporate Artifact Repository</name>
+					<url>https://repo.ace.aaaclubnet.com/repository/maven-public</url>
+					<layout>default</layout>
+				</repository>
+
+			</repositories>
+
+			<pluginRepositories>
+				<pluginRepository>
+					<id>Nexus-IS</id>
+					<name>Corporate Artifact Repository</name>
+					<url>https://repo.ace.aaaclubnet.com/repository/maven-public</url>
+					<layout>default</layout>
+				</pluginRepository>
+			</pluginRepositories>
+		</profile>		
+	</profiles>
+
+	<pluginGroups>
+		<pluginGroup>org.mule.tools</pluginGroup>
+	</pluginGroups>
+
+	<servers>
+		<!--configure the user credentials to access the repositories-->
+		<server>
+			<id>corporate-artifact-repository</id>
+			<username>${nexusUser}</username>
+			<password>${nexusPW}</password>
+		</server>
+		<server>
+			<id>my-organization-exchange-repository</id>
+			<username>${u}</username>
+			<password>${p}</password>
+		</server>
+		<server>
+			<id>mulesoft-exchange-repository</id>
+			<username>${u}</username>
+			<password>${p}</password>
+		</server>
+	</servers>
+
+	<proxies>
+		<proxy>
+			<id>proxyOne</id>
+			<active>false</active>
+			<protocol>http</protocol>
+			<host>x.x.x.x</host>
+			<port>80</port>
+			<nonProxyHosts>localhost|127.0.0.1|10.*.*.*</nonProxyHosts>
+		</proxy>
+		<proxy>
+			<id>proxyTwo</id>
+			<active>false</active>
+			<protocol>http</protocol>
+			<host>x.x.x.x</host>
+			<port>10204</port>
+			<nonProxyHosts>localhost|127.0.0.1|10.*.*.*</nonProxyHosts>
+		</proxy>
+	</proxies>
+
+</settings>

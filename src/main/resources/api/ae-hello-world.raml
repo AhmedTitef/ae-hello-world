@@ -1,0 +1,41 @@
+#%RAML 1.0
+title: ae-hello-world
+description: Returns user posts from a static sample REST endpoint
+version: 1.0.0
+
+traits:
+  standard-error-responses: !include exchange_modules/e4abed80-2775-4983-a16d-b13d05d5fcf4/commonapitraits/0.1.9/standardErrorResponse.raml
+  client-credentials-required: !include exchange_modules/e4abed80-2775-4983-a16d-b13d05d5fcf4/commonapitraits/0.1.9/clientCredentialsRequired.raml
+  accept-required: !include exchange_modules/e4abed80-2775-4983-a16d-b13d05d5fcf4/commonapitraits/0.1.9/accept-required.raml
+  content-type-required: !include exchange_modules/e4abed80-2775-4983-a16d-b13d05d5fcf4/commonapitraits/0.1.9/contentTypeRequired.raml
+
+/ping:
+  get:
+    description: Return a standard response.
+    is: [client-credentials-required,accept-required,standard-error-responses]
+    responses:
+      200:
+        body:
+          application/json:
+            example: {"dependentApiResponse":"","status":"200","module":"myApi","env":"DEV","server":"myhost.domain","message":"Alive"}
+  put:
+    description: Return a standard response
+    is: [client-credentials-required,content-type-required,accept-required,standard-error-responses]
+    body:
+      application/json:
+        example: {}
+    responses:
+      200:
+        body:
+          application/json:
+            example: {"dependentApiResponse":"","status":"200","module":"myApi","env":"DEV","server":"myhost.domain","message":"Alive"}
+
+/posts:
+  get:
+    description: Return a list of posts by user
+    is: [client-credentials-required, accept-required,standard-error-responses]
+    responses:
+      200:
+        body:
+          application/json:
+            
